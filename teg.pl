@@ -1,4 +1,3 @@
-
 continente(americaDelSur).
 continente(americaDelNorte).
 continente(asia).
@@ -75,6 +74,7 @@ limitrofes(australia,chile).
 puedenAtacarse(Jugador1, Jugador2):-
   ocupa(Pais1,Jugador1,_),
   ocupa(Pais2,Jugador2,_),
+  Jugador1 \= Jugador2,
   sonLimitrofes(Pais1, Pais2).
 
 %estaTodoBien/2 que relaciona dos jugadores que, o bien no pueden atacarse, o son aliados.
@@ -115,7 +115,19 @@ puedeConquistar(Jugador,Continente):-
   jugador(Jugador),
   continente(Continente),
   not(ocupaContinente(Jugador,Continente)),
-  forall((ocupa(Pais, Jugador2,_), Jugador \= Jugador2, estaEn(Continente,Pais)), (ocupa(OtroPais, Jugador,_),sonLimitrofes(Pais,OtroPais), not(aliados(Jugador2,Jugador)))).
+  forall(
+    paisQueFaltaEn(Pais,Jugador,Continente),
+    puedeAtacar(Pais, Jugador)).
+
+paisQueFaltaEn(Pais,Jugador,Continente):-
+  estaEn(Continente,Pais),
+  not(ocupa(Pais,Jugador,_)).
+  
+puedeAtacar(Pais,Jugador):-
+  ocupa(OtroPais, Jugador,_),
+  sonLimitrofes(Pais,OtroPais), 
+  ocupa(Pais, Jugador2,_),
+  not(aliados(Jugador2,Jugador)).
 
 %elQueTieneMasEjercitos/2 que relaciona un jugador y un país si se cumple que es en ese país que hay más ejércitos que en los países del resto del mundo y a su vez ese país es ocupado por ese jugador.
 elQueTieneMasEjercitos(Jugador,Pais):-
@@ -126,8 +138,56 @@ elQueTieneMasEjercitos(Jugador,Pais):-
 juntan(PaisA, PaisB, Suma):-
   ocupa(PaisA,_,CantA),
   ocupa(PaisB,_,CantB),
-  plus(CantA, CantB,Suma).
+  Suma is CantA + CantB.
 
 % seguroGanaContra/2 que relaciona dos países limítrofes de diferentes jugadores y es cierto cuando el primero tiene más del doble de ejércitos que el segundo.
+seguroGanaContra(PaisA, PaisB):-
+  ocupa(PaisA,_,CantA),
+  ocupa(PaisB,_,CantB),
+  CantA > 2 * CantB.
+% Para no repetir código con el que sigue:
+% seguroGanaContra(PaisA, PaisB):-
+%     cuantoAgregaParaGanarSeguro(PaisA,PaisB,0).
 
 % cuantoAgregaParaGanarSeguro/3 que relaciona dos países limítrofes de diferentes jugadores y una cantidad, y es cierto cuando esa cantidad es la cantidad de ejércitos que tengo que ponerle al primer país para que le gane seguro al segundo. ¡No repetir lógica!
+cuantoAgregaParaGanarSeguro(PaisA, PaisB, Agrega):-
+  ocupa(PaisA,_,CantA),
+  ocupa(PaisB,_,CantB),
+  Agrega is 2 * CantB - CantA.
+
+% Saber si un jugador gana:
+gano(Jugador):-
+  objetivo(Jugador, Objetivo),
+  cumple(Objetivo,Jugador).
+
+cumple(ocuparContinente(Continente),Jugador):-
+  ocupaContinente(Jugador,Continente).
+
+cumple(ocuparPaises(CantParaGanar,Continente), Jugador):-
+  cuantosPaisesOcupaEn(Jugador,Continente,CantOcupa),
+  CantParaGanar =< CantOcupa.
+
+cumple(destruirJugador(Enemigo),_):-
+  loLiquidaron(Enemigo).
+
+  % Agregados para presentar functores
+objetivo(amarillo, ocuparContinente(asia)).
+objetivo(amarillo,ocuparPaises(2, americaDelSur)). 
+objetivo(rojo, destruirJugador(negro)). 
+objetivo(magenta, destruirJugador(rojo)). 
+objetivo(negro, ocuparContinente(oceania)).
+objetivo(negro,ocuparContinente(americaDelSur)). 
+
+% Agregados para presentar functores
+cuantosPaisesOcupaEn(amarillo, americaDelSur, 1).
+cuantosPaisesOcupaEn(amarillo, americaDelNorte, 4).
+cuantosPaisesOcupaEn(amarillo, asia, 3).
+cuantosPaisesOcupaEn(amarillo, oceania, 0).
+cuantosPaisesOcupaEn(magenta, americaDelSur, 2).
+cuantosPaisesOcupaEn(magenta, americaDelNorte, 0).
+cuantosPaisesOcupaEn(magenta, asia, 0).
+cuantosPaisesOcupaEn(magenta, oceania, 0).
+cuantosPaisesOcupaEn(negro, americaDelSur, 1).
+cuantosPaisesOcupaEn(negro, americaDelNorte, 0).
+cuantosPaisesOcupaEn(negro, asia, 1).
+cuantosPaisesOcupaEn(negro, oceania, 4).
