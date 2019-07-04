@@ -124,7 +124,9 @@ elQueTieneMasEjercitos(Jugador,Pais):-
 
 % juntan/3 que relaciona dos países y una cantidad, cuando la cantidad representa la suma de los ejércitos en ambos países.
 juntan(PaisA, PaisB, Suma):-
-  
+  ocupa(PaisA,_,CantA),
+  ocupa(PaisB,_,CantB),
+  plus(CantA, CantB,Suma).
 
 % seguroGanaContra/2 que relaciona dos países limítrofes de diferentes jugadores y es cierto cuando el primero tiene más del doble de ejércitos que el segundo.
 
